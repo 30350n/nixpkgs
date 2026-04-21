@@ -85,11 +85,6 @@ stdenv.mkDerivation rec {
       --replace 'GCC_CMD = "gcc"' 'GCC_CMD = "${stdenv.cc.targetPrefix}cc"'
   '';
 
-  patches = lib.optionals (stdenv.hostPlatform != stdenv.buildPlatform) [
-    # https://github.com/Klipper3d/klipper/pull/7254
-    ./cross-ffi.patch
-  ];
-
   pythonInterpreter =
     (python3.withPackages (
       p: with p; [
