@@ -95,7 +95,11 @@ stdenv.mkDerivation rec {
 
   passthru = {
     makeFlasher =
-      { flashDevice }:
+      {
+        flashDevice ? null,
+        canbusNetwork ? null,
+        canbusDevice ? null,
+      }:
       klipper-flash.override {
         klipper-firmware = klipper-firmware.override args;
         inherit
@@ -103,6 +107,8 @@ stdenv.mkDerivation rec {
           firmwareConfig
           mcu
           flashDevice
+          canbusNetwork
+          canbusDevice
           ;
       };
   };
