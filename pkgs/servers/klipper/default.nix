@@ -54,12 +54,12 @@ stdenv.mkDerivation rec {
   postPatch = ''
     for file in klippy.py console.py parsedump.py; do
       substituteInPlace $file \
-        --replace '/usr/bin/env python2' '/usr/bin/env python'
+        --replace-quiet '/usr/bin/env python2' '/usr/bin/env python'
     done
 
     # needed for cross compilation
     substituteInPlace ./chelper/__init__.py \
-      --replace 'GCC_CMD = "gcc"' 'GCC_CMD = "${stdenv.cc.targetPrefix}cc"'
+      --replace-warn 'GCC_CMD = "gcc"' 'GCC_CMD = "${stdenv.cc.targetPrefix}cc"'
   '';
 
   pythonInterpreter =
@@ -86,8 +86,10 @@ stdenv.mkDerivation rec {
     # under `klipper_path`
     cp -r $src/docs $out/lib/docs
     cp -r $src/config $out/lib/config
-    cp -r $src/scripts $out/lib/scripts
     cp -r $src/klippy $out/lib/klippy
+    mkdir -p $out/lib/scripts
+    cp -r $src/scripts/* $out/lib/scripts
+    cp $src/lib/canboot/flash_can.py $out/lib/scripts/flash_can.py
 
     # Add version information. For the normal procedure see https://www.klipper3d.org/Packaging.html#versioning
     # This is done like this because scripts/make_version.py is not available when sourceRoot is set to "${src.name}/klippy"
