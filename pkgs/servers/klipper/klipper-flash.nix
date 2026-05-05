@@ -22,6 +22,14 @@ let
     if matches != null then head matches else null;
   matchPlatform = getConfigField "CONFIG_BOARD_DIRECTORY";
   matchBoard = getConfigField "CONFIG_MCU";
+  matchAvrdudeProtocol = getConfigField "CONFIG_AVRDUDE_PROTOCOL";
+  flashUsbSupportedPlatforms =
+    with builtins;
+    let
+      flashUsbContent = readFile "${klipper}/lib/scripts/flash_usb.py";
+      mcuTypesContent = head (split "\}" (lib.last (split "MCUTYPES = \\{" flashUsbContent)));
+    in
+    concatLists (filter isList (split "'([^']+)'" mcuTypesContent));
 in
 assert lib.assertMsg (
   (flashDevice != null) != (canbusNetwork != null && canbusDevice != null)
@@ -42,9 +50,13 @@ writeShellApplication {
   text =
     # generic USB script for most things with serial and bootloader (see MCU_TYPES in scripts/flash_usb.py)
     if flashDevice != null then
-      if matchBoard != null && matchPlatform != null then
+      if (builtins.elem matchBoard flashUsbSupportedPlatforms) && matchPlatform != null then
         ''
           ${klipper}/lib/scripts/flash_usb.py -t ${matchBoard} -d ${flashDevice} ${klipper-firmware}/klipper.bin "$@"
+        ''
+      else if matchPlatform == "avr" && matchAvrdudeProtocol != null && matchBoard != null then
+        ''
+          avrdude -p${matchBoard} -c${matchAvrdudeProtocol} -P"${flashDevice}" -D -U"flash:w:${klipper-firmware}/klipper.elf.hex:i"
         ''
       else
         ''
